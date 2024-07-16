@@ -1,25 +1,28 @@
 import { Injectable } from '@nestjs/common';
-
 import { v4 } from 'uuid';
-
-import { Cart } from '../models';
+import { Cart, CartStatuses } from '../models';
 
 @Injectable()
 export class CartService {
   private userCarts: Record<string, Cart> = {};
 
   findByUserId(userId: string): Cart {
-    return this.userCarts[ userId ];
+    return this.userCarts[userId];
   }
 
-  createByUserId(userId: string) {
+  createByUserId(userId: string): Cart {
     const id = v4();
-    const userCart = {
+    const now = new Date().toISOString();
+    const userCart: Cart = {
       id,
+      user_id: userId,
+      created_at: now,
+      updated_at: now,
+      status: CartStatuses.OPEN,
       items: [],
     };
 
-    this.userCarts[ userId ] = userCart;
+    this.userCarts[userId] = userCart;
 
     return userCart;
   }
@@ -35,21 +38,23 @@ export class CartService {
   }
 
   updateByUserId(userId: string, { items }: Cart): Cart {
-    const { id, ...rest } = this.findOrCreateByUserId(userId);
+    const { id, user_id, created_at, status } = this.findOrCreateByUserId(userId);
 
-    const updatedCart = {
+    const updatedCart: Cart = {
       id,
-      ...rest,
-      items: [ ...items ],
-    }
+      user_id,
+      created_at,
+      updated_at: new Date().toISOString(),
+      status,
+      items: [...items],
+    };
 
-    this.userCarts[ userId ] = { ...updatedCart };
+    this.userCarts[userId] = updatedCart;
 
-    return { ...updatedCart };
+    return updatedCart;
   }
 
-  removeByUserId(userId): void {
-    this.userCarts[ userId ] = null;
+  removeByUserId(userId: string): void {
+    this.userCarts[userId] = null;
   }
-
 }
