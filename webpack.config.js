@@ -7,7 +7,6 @@ module.exports = (options, webpack) => {
   return {
     ...options,
     externals: [],
-    entry: ['./src/lambda.ts'],
     plugins: [
       ...options.plugins,
       new webpack.IgnorePlugin({
