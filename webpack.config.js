@@ -1,4 +1,4 @@
-module.exports = (options, webpack) => {
+module.exports = function (options, webpack) {
   const lazyImports = [
     '@nestjs/microservices/microservices-module',
     '@nestjs/websockets/socket-module',
@@ -6,7 +6,12 @@ module.exports = (options, webpack) => {
 
   return {
     ...options,
+    entry: ['./src/main.ts'],
     externals: [],
+    output: {
+      ...options.output,
+      libraryTarget: 'commonjs2',
+    },
     plugins: [
       ...options.plugins,
       new webpack.IgnorePlugin({
@@ -18,6 +23,7 @@ module.exports = (options, webpack) => {
               return true;
             }
           }
+
           return false;
         },
       }),
