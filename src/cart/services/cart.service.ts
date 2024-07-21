@@ -20,7 +20,7 @@ export class CartService {
       updated_at: now,
       status: CartStatuses.OPEN,
       items: [],
-    };
+    } as Cart;
 
     this.userCarts[userId] = userCart;
 
