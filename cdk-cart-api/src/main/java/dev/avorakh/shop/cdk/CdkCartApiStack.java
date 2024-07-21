@@ -28,11 +28,16 @@ public class CdkCartApiStack extends Stack {
 
         var api = createApiGateway();
 
-        var cartLambda = new LambdaIntegration(cartLambdaFunction);
+        var cartLambda = new LambdaIntegration(cartLambdaFunction, LambdaIntegrationOptions.builder()
+                .proxy(true)
+                .build());
 
-        var cart = api.getRoot().addResource("{proxy+}");
-        cart.addMethod("ANY", cartLambda,
-                MethodOptions.builder().build());
+        api.getRoot().addProxy(ProxyResourceOptions.builder()
+                .anyMethod(true)
+                .defaultIntegration(cartLambda)
+                .build());
+
+        api.getRoot().addMethod("GET", cartLambda);
 
         api.addGatewayResponse("GatewayResponse4XX", GatewayResponseOptions.builder()
                 .type(ResponseType.DEFAULT_4_XX)
@@ -42,7 +47,6 @@ public class CdkCartApiStack extends Stack {
                         "Access-Control-Allow-Methods", "'*'"
                 ))
                 .build());
-
 
         doDeployment(api);
     }
