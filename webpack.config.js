@@ -1,28 +1,27 @@
-const path = require('path');
-const nodeExternals = require('webpack-node-externals');
-const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
+module.exports = (options, webpack) => {
+  const lazyImports = [
+    '@nestjs/microservices/microservices-module',
+    '@nestjs/websockets/socket-module',
+  ];
 
-module.exports = {
-  entry: ['./src/lambda.ts'],
-  target: 'node',
-  externals: [nodeExternals()],
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
-      },
+  return {
+    ...options,
+    externals: [],
+    entry: ['./src/lambda.ts'],
+    plugins: [
+      ...options.plugins,
+      new webpack.IgnorePlugin({
+        checkResource(resource) {
+          if (lazyImports.includes(resource)) {
+            try {
+              require.resolve(resource);
+            } catch (err) {
+              return true;
+            }
+          }
+          return false;
+        },
+      }),
     ],
-  },
-  resolve: {
-    extensions: ['.ts', '.js'],
-  },
-  output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'main.js',
-  },
-  plugins: [
-    new RunScriptWebpackPlugin({ name: 'main.js' }),
-  ],
+  };
 };
