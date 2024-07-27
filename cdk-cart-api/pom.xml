@@ -12,6 +12,7 @@
         <cdk.version>2.149.0</cdk.version>
         <constructs.version>[10.0.0,11.0.0)</constructs.version>
         <junit.version>5.7.1</junit.version>
+        <dotenv.java.version>3.0.0</dotenv.java.version>
     </properties>
 
     <build>
@@ -48,6 +49,12 @@
             <groupId>software.constructs</groupId>
             <artifactId>constructs</artifactId>
             <version>${constructs.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>${dotenv.java.version}</version>
         </dependency>
 
     </dependencies>
