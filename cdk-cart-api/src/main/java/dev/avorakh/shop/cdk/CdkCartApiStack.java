@@ -13,8 +13,11 @@ import software.amazon.awscdk.services.lambda.Architecture;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.rds.DatabaseInstance;
+import software.amazon.awscdk.services.rds.DatabaseInstanceAttributes;
 import software.constructs.Construct;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,8 +65,6 @@ public class CdkCartApiStack extends Stack {
                 .anyMethod(true)
                 .defaultIntegration(cartLambda)
                 .build());
-
-        api.getRoot().addMethod("GET", cartLambda);
 
         api.addGatewayResponse("GatewayResponse4XX", GatewayResponseOptions.builder()
                 .type(ResponseType.DEFAULT_4_XX)
