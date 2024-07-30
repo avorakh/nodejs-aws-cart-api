@@ -9,15 +9,16 @@ import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.services.apigateway.*;
 import software.amazon.awscdk.services.ec2.*;
+import software.amazon.awscdk.services.iam.IRole;
+import software.amazon.awscdk.services.iam.ManagedPolicy;
+import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Architecture;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
-import software.amazon.awscdk.services.rds.DatabaseInstance;
-import software.amazon.awscdk.services.rds.DatabaseInstanceAttributes;
 import software.constructs.Construct;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,15 +46,25 @@ public class CdkCartApiStack extends Stack {
                 .vpcId(dotenv.get("DB_VPC_ID"))
                 .build());
 
-        var sg = SecurityGroup.fromSecurityGroupId(this, "DB-SG", dotenv.get("DB_SECURITY_GROUP_ID"));
+        var lambdaSecurityGroup = SecurityGroup.Builder.create(this, "Lambda-SG")
+                .securityGroupName("LambdaSecurityGroup")
+                .vpc(vpc)
+                .allowAllOutbound(true)
+                .build();
 
-        var cartLambdaFunction = cartLambdaFunction(vpc, sg);
+        var rdsSecurityGroup = SecurityGroup.fromSecurityGroupId(this, "DB-SG", dotenv.get("DB_SECURITY_GROUP_ID"));
 
-        cartLambdaFunction.addEnvironment(DB_HOST,dotenv.get(DB_HOST));
-        cartLambdaFunction.addEnvironment(DB_PORT,dotenv.get(DB_PORT));
-        cartLambdaFunction.addEnvironment(DB_USERNAME,dotenv.get(DB_USERNAME));
-        cartLambdaFunction.addEnvironment(DB_PASSWORD,dotenv.get(DB_PASSWORD));
-        cartLambdaFunction.addEnvironment(DB_NAME,dotenv.get(DB_NAME));
+        rdsSecurityGroup.addIngressRule(lambdaSecurityGroup, Port.POSTGRES, "Allow Lambda function to access RDS");
+
+        var lambdaRole = createLambdaRole();
+
+        var cartLambdaFunction = cartLambdaFunction(vpc, lambdaSecurityGroup, lambdaRole);
+
+        cartLambdaFunction.addEnvironment(DB_HOST, dotenv.get(DB_HOST));
+        cartLambdaFunction.addEnvironment(DB_PORT, dotenv.get(DB_PORT));
+        cartLambdaFunction.addEnvironment(DB_USERNAME, dotenv.get(DB_USERNAME));
+        cartLambdaFunction.addEnvironment(DB_PASSWORD, dotenv.get(DB_PASSWORD));
+        cartLambdaFunction.addEnvironment(DB_NAME, dotenv.get(DB_NAME));
 
         var api = createApiGateway();
 
@@ -78,7 +89,17 @@ public class CdkCartApiStack extends Stack {
         doDeployment(api);
     }
 
-    private @NotNull Function cartLambdaFunction(IVpc vpc, ISecurityGroup sg) {
+    private @NotNull Role createLambdaRole() {
+        return Role.Builder.create(this, "LambdaExecutionRole")
+                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .managedPolicies(List.of(
+                        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaVPCAccessExecutionRole"),
+                        ManagedPolicy.fromAwsManagedPolicyName("AmazonRDSFullAccess")
+                ))
+                .build();
+    }
+
+    private @NotNull Function cartLambdaFunction(IVpc vpc, ISecurityGroup sg, IRole role) {
         return Function.Builder.create(this, "cartServiceLambdaFunction")
                 .functionName("cartService")
                 .runtime(Runtime.NODEJS_20_X)
@@ -90,6 +111,7 @@ public class CdkCartApiStack extends Stack {
                 .allowPublicSubnet(true)
                 .ephemeralStorageSize(Size.mebibytes(512))
                 .vpc(vpc)
+                .role(role)
                 .securityGroups(List.of(sg))
                 .build();
     }
