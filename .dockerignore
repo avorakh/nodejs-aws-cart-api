@@ -13,3 +13,19 @@ cdk-cart-api
 # Project IDE + Git configuration
 .git
 .idea
+
+# Ignore local environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignore logs
+logs
+*.log
+
+# Ignore temporary files
+tmp
+temp
+*.tmp
