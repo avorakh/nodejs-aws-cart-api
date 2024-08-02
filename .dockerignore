@@ -1,0 +1,15 @@
+# Docker files should be excluded
+Dockerfile
+.dockerignore
+
+# Application files should be excluded
+dist
+node_modules
+test
+
+# CDK project files should be excluded
+cdk-cart-api
+
+# Project IDE + Git configuration
+.git
+.idea
