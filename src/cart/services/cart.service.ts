@@ -17,7 +17,7 @@ export class CartService {
     const userCart = {
       id,
       items: [],
-    };
+    } as Cart;
 
     this.userCarts[ userId ] = userCart;
 
